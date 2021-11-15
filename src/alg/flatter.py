@@ -1,7 +1,3 @@
-'''
-    algorithm responsible for flattening complex folders
-'''
-
 import os
 import random
 import shutil
@@ -31,3 +27,21 @@ DEFAULT_CONFIG = {
     "ignore_file_regex": None
 }
 
+
+class Flatter:
+    '''
+    algorithm responsible for flattening complex folders into flatten based on config
+    '''
+
+    def __init__(self, config=DEFAULT_CONFIG):
+        self.conf = config
+        self.regex = None
+
+    def set_regex(self, regex):
+        self.regex = regex
+
+    def run_flatten(self):
+        if self.regex is None:
+            raise Exception("No regex specified!")
+        
+        
