@@ -23,13 +23,15 @@ DEFAULT_CONFIG = {
     "folder_input": "test",
     "folder_output": "test_out",
     "log_filename": "test_log",
-    "folder2_enable": True,  # TODO: enable to test
+    "folder2_enable": True,
     "folder2_output": "test_out2",
     "folders_ratio": 0.3,
     "random_seed": 2137,
-    "ignore_file_regex": None # TODO: write feature
+    "ignore_file_regex": None
 }
 
+# TODO: Jacek - ignore_file_regex feature
+# TODO: Jacek - add asserts and exceptions
 
 class Flatter:
     '''
