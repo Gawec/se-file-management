@@ -1,6 +1,9 @@
-import os
+from os import listdir, mkdir
+from os.path import join as os_join, isfile, isdir
 import random
-import shutil
+import time
+from regex import Regex
+from shutil import move, rmtree
 
 '''
     examplary config needed to be passed to alg to perform its task
@@ -20,11 +23,11 @@ DEFAULT_CONFIG = {
     "folder_input": "test",
     "folder_output": "test_out",
     "log_filename": "test_log",
-    "folder2_enable": False,  # TODO: enable to test
+    "folder2_enable": True,  # TODO: enable to test
     "folder2_output": "test_out2",
     "folders_ratio": 0.3,
     "random_seed": 2137,
-    "ignore_file_regex": None
+    "ignore_file_regex": None # TODO: write feature
 }
 
 
@@ -35,13 +38,85 @@ class Flatter:
 
     def __init__(self, config=DEFAULT_CONFIG):
         self.conf = config
-        self.regex = None
 
     def set_regex(self, regex):
         self.regex = regex
 
+    def __move_and_log(self, input_file):
+        out_filename = self.regex.create_name(input_file)
+
+        folder1_prob = 1.0
+        if self.conf["folder2_enable"]:
+            folder1_prob = random.random()
+
+        out_path = None
+        if folder1_prob > self.conf["folders_ratio"]:
+            out_path = os_join(self.conf["folder_output"], out_filename)
+        else:
+            out_path = os_join(self.conf["folder2_output"], out_filename)
+
+        move(input_file, out_path)
+        self.log.write(f"{input_file} {out_path}\n")
+    
+    def __simulate_move(self, input_file):
+        out_filename = self.regex.create_name(input_file)
+
+        folder1_prob = 1.0
+        if self.conf["folder2_enable"]:
+            folder1_prob = random.random()
+
+        out_path = None
+        if folder1_prob > self.conf["folders_ratio"]:
+            out_path = os_join(self.conf["folder_output"], out_filename)
+        else:
+            out_path = os_join(self.conf["folder2_output"], out_filename)
+
+        self.sim_arr.append((input_file, out_path))
+
+
+    def __flatten_recur(self, input_path, action=None):
+        dirs = listdir(input_path)
+        files = [f for f in dirs if isfile(os_join(input_path, f))]
+        folders = [f for f in dirs if isdir(os_join(input_path, f))]
+        for f in files:
+            full_path = os_join(input_path, f)
+            action(full_path)
+
+        for f in folders:
+            full_path = os_join(input_path, f)
+            self.__flatten_recur(full_path, action)
+            rmtree(full_path)
+
+    def simulate_flatten(self):
+        if self.regex is None:
+            raise Exception("No regex specified!")
+
+        if self.conf["folder2_enable"]:
+            random.seed(self.conf["random_seed"])
+        
+        self.sim_arr = []
+        self.__flatten_recur(self.conf["folder_input"], self.__simulate_move)
+        return self.sim_arr
+
     def run_flatten(self):
         if self.regex is None:
             raise Exception("No regex specified!")
-        
-        
+
+        if self.conf["folder2_enable"]:
+            random.seed(self.conf["random_seed"])
+
+        self.log = open(f"{self.conf['log_filename']}_{time.time()}.log", 'w')
+        mkdir(self.conf["folder_output"])
+        if self.conf["folder2_enable"]:
+            mkdir(self.conf["folder2_output"])
+
+        self.__flatten_recur(self.conf["folder_input"], self.__move_and_log)
+        rmtree(self.conf["folder_input"])
+        self.log.close()
+
+
+if __name__ == "__main__":
+    ftt = Flatter()
+    ftt.set_regex(Regex())
+    ftt.run_flatten()
+    # print(ftt.simulate_flatten())
