@@ -30,8 +30,6 @@ DEFAULT_CONFIG = {
     "ignore_file_regex": None
 }
 
-# TODO: Jacek - ignore_file_regex feature
-# TODO: Jacek - add asserts and exceptions
 
 class Flatter:
     '''
@@ -58,8 +56,8 @@ class Flatter:
             out_path = os_join(self.conf["folder2_output"], out_filename)
 
         move(input_file, out_path)
-        self.log.write(f"{input_file} {out_path}\n")
-    
+        self.log.write(f"{input_file} moved_to_==> {out_path}\n")
+
     def __simulate_move(self, input_file):
         out_filename = self.regex.create_name(input_file)
 
@@ -75,19 +73,20 @@ class Flatter:
 
         self.sim_arr.append((input_file, out_path))
 
-
     def __flatten_recur(self, input_path, action=None):
         dirs = listdir(input_path)
         files = [f for f in dirs if isfile(os_join(input_path, f))]
         folders = [f for f in dirs if isdir(os_join(input_path, f))]
         for f in files:
+            if self.regex.check_if_ignore(f):
+                continue
             full_path = os_join(input_path, f)
             action(full_path)
 
         for f in folders:
             full_path = os_join(input_path, f)
             self.__flatten_recur(full_path, action)
-            rmtree(full_path)
+            # rmtree(full_path)
 
     def simulate_flatten(self):
         if self.regex is None:
@@ -95,7 +94,7 @@ class Flatter:
 
         if self.conf["folder2_enable"]:
             random.seed(self.conf["random_seed"])
-        
+
         self.sim_arr = []
         self.__flatten_recur(self.conf["folder_input"], self.__simulate_move)
         return self.sim_arr
@@ -108,17 +107,34 @@ class Flatter:
             random.seed(self.conf["random_seed"])
 
         self.log = open(f"{self.conf['log_filename']}_{time.time()}.log", 'w')
+
         mkdir(self.conf["folder_output"])
         if self.conf["folder2_enable"]:
             mkdir(self.conf["folder2_output"])
 
         self.__flatten_recur(self.conf["folder_input"], self.__move_and_log)
-        rmtree(self.conf["folder_input"])
+        # rmtree(self.conf["folder_input"])
         self.log.close()
+
+    def retrieve_from_log(self, log_name):
+        dest_src = []
+        with open(log_name, 'r') as log:
+            for line in log:
+                dest, source = line.split(" moved_to_==> ")
+                source = source[:-1]
+                dest_src.append(tuple((dest, source)))
+        failed_files = []
+        for file in dest_src:
+            try:
+                move(file[1], file[0])
+            except:
+                failed_files.append(file[0])
+        return failed_files
 
 
 if __name__ == "__main__":
     ftt = Flatter()
     ftt.set_regex(Regex())
     ftt.run_flatten()
+    # print(ftt.retrieve_from_log("test_log_1637710061.4046867.log"))
     # print(ftt.simulate_flatten())
