@@ -2,6 +2,7 @@ from os import listdir, mkdir
 from os.path import join as os_join, isfile, isdir
 import random
 import time
+
 from regex import Regex
 from shutil import move, rmtree
 
@@ -20,7 +21,7 @@ from shutil import move, rmtree
 '''
 
 DEFAULT_CONFIG = {
-    "folder_input": "test",
+    "folder_input": "C:/Users/dawka/Desktop/se-file-management/scripts/test/folder_0_0",
     "folder_output": "test_out",
     "log_filename": "test_log",
     "folder2_enable": True,

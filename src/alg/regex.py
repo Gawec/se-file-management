@@ -9,7 +9,7 @@ class Regex:
 
     def create_name(self, filepath):
         '''Creates file name based on filepath and set regex'''
-        return ''.join([s+"_" for s in filepath.split("/")])[:-1]
+        return ''.join([s+"_" for s in filepath.split("/")])[:-2]
 
     def check_if_ignore(self, filepath):
         '''Returns true or false whether a file should be ignred based on regex and its name'''
