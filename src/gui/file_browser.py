@@ -15,34 +15,36 @@ if not starting_path:
 treedata = sg.TreeData()
 
 
+
 def add_files_in_folder(parent, dirname):
     files = os.listdir(dirname)
     for f in files:
         fullname = os.path.join(dirname, f)
         if os.path.isdir(fullname):  # if it's a folder, add folder and recurse
             treedata.Insert(parent, fullname, f, values=[], icon=folder_icon)
-            add_files_in_folder(fullname, fullname)
+        #add_files_in_folder(fullname, fullname)
         else:
-
             treedata.Insert(parent, fullname, f, values=[
                 os.stat(fullname).st_size], icon=file_icon)
 
 
-add_files_in_folder('', starting_path)
-# TODO: if required, change view to look like a regular file explorer
-layout = [[sg.Text('File and folder browser Test')],
-          [sg.Tree(data=treedata,
-                   headings=['Size', ],
-                   auto_size_columns=True,
-                   num_rows=20,
-                   col0_width=40,
-                   key='-TREE-',
-                   show_expanded=False,
-                   enable_events=True),
-           ],
-          [sg.Button('Open'), sg.Button('Cancel')]]
+def window_refresh():
+    global window
+    layout = [[sg.Text('File browser')],
+              [sg.Tree(data=treedata,
+                       headings=['Size', ],
+                       auto_size_columns=True,
+                       num_rows=20,
+                       col0_width=40,
+                       key='-TREE-',
+                       show_expanded=False,
+                       enable_events=True),
+               ],
+              [sg.Button('Open'), sg.Button('Up'), sg.Button('Cancel')]]
+    window = sg.Window('Tree Element Test', layout)
 
-window = sg.Window('Tree Element Test', layout)
+add_files_in_folder('', starting_path)
+window_refresh()
 
 while True:  # Event Loop
     event, values = window.read()
@@ -50,5 +52,19 @@ while True:  # Event Loop
         break
     # TODO: implement opening files through doubleclick
     if event == 'Open':
-        os.startfile(((values["-TREE-"][0]).replace('/', '\\')))
+        selected = ((values["-TREE-"][0]).replace('/', '\\'))
+        if os.path.isdir(selected):
+            treedata = sg.TreeData()
+            add_files_in_folder('', selected)
+            window_refresh()
+            starting_path=selected
+        else:
+            os.startfile(selected)
+    if event == 'Up':
+        treedata = sg.TreeData()
+        add_files_in_folder('', os.path.dirname(starting_path))
+        window_refresh()
+
+
+
 window.close()
