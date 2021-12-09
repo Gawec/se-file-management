@@ -29,6 +29,13 @@ def format_path(path):
         path = fix_path(path)
         return path
 
+    if path == 'D:\\':
+        return path
+    if path == 'C:\\':
+        return path
+
+    path = path.replace('\\', '/')
+
     split_path = path.split('/')
     folder_list = [x for x in split_path if x != ''] # x is folder name
     formated_path = ''.join(folder + '/' for folder in folder_list)[:-1]

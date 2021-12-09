@@ -1,13 +1,16 @@
 import sys
 import os
 import PySimpleGUI as sg
+import path_functions as pf
+from path_navigation import Navigator
+from icons import folder_icon, file_icon
 
-# Base64 versions of images of a folder and a file. PNG files (may not work with PySimpleGUI27, swap with GIFs)
+starting_path = sg.popup_get_folder('Folder to display', history=True, history_setting_filename='search_history', initial_folder='This PC')
+starting_path = pf.format_path(starting_path)   # just in case of random ///////////   or    D:/    or    D:
 
-folder_icon = b'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsSAAALEgHS3X78AAABnUlEQVQ4y8WSv2rUQRSFv7vZgJFFsQg2EkWb4AvEJ8hqKVilSmFn3iNvIAp21oIW9haihBRKiqwElMVsIJjNrprsOr/5dyzml3UhEQIWHhjmcpn7zblw4B9lJ8Xag9mlmQb3AJzX3tOX8Tngzg349q7t5xcfzpKGhOFHnjx+9qLTzW8wsmFTL2Gzk7Y2O/k9kCbtwUZbV+Zvo8Md3PALrjoiqsKSR9ljpAJpwOsNtlfXfRvoNU8Arr/NsVo0ry5z4dZN5hoGqEzYDChBOoKwS/vSq0XW3y5NAI/uN1cvLqzQur4MCpBGEEd1PQDfQ74HYR+LfeQOAOYAmgAmbly+dgfid5CHPIKqC74L8RDyGPIYy7+QQjFWa7ICsQ8SpB/IfcJSDVMAJUwJkYDMNOEPIBxA/gnuMyYPijXAI3lMse7FGnIKsIuqrxgRSeXOoYZUCI8pIKW/OHA7kD2YYcpAKgM5ABXk4qSsdJaDOMCsgTIYAlL5TQFTyUIZDmev0N/bnwqnylEBQS45UKnHx/lUlFvA3fo+jwR8ALb47/oNma38cuqiJ9AAAAAASUVORK5CYII='
-file_icon = b'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsSAAALEgHS3X78AAABU0lEQVQ4y52TzStEURiHn/ecc6XG54JSdlMkNhYWsiILS0lsJaUsLW2Mv8CfIDtr2VtbY4GUEvmIZnKbZsY977Uwt2HcyW1+dTZvt6fn9557BGB+aaNQKBR2ifkbgWR+cX13ubO1svz++niVTA1ArDHDg91UahHFsMxbKWycYsjze4muTsP64vT43v7hSf/A0FgdjQPQWAmco68nB+T+SFSqNUQgcIbN1bn8Z3RwvL22MAvcu8TACFgrpMVZ4aUYcn77BMDkxGgemAGOHIBXxRjBWZMKoCPA2h6qEUSRR2MF6GxUUMUaIUgBCNTnAcm3H2G5YQfgvccYIXAtDH7FoKq/AaqKlbrBj2trFVXfBPAea4SOIIsBeN9kkCwxsNkAqRWy7+B7Z00G3xVc2wZeMSI4S7sVYkSk5Z/4PyBWROqvox3A28PN2cjUwinQC9QyckKALxj4kv2auK0xAAAAAElFTkSuQmCC'
-
-starting_path = sg.popup_get_folder('Folder to display')
+event_log = Navigator()
+nav = Navigator()
+nav.append_path(starting_path)
 
 if not starting_path:
     sys.exit(0)
@@ -29,11 +32,15 @@ def add_files_in_folder(parent, dirname):
 
 
 def window_refresh():
-    global window
-    layout = [[sg.Text('File browser')],
+    global window   # should try to change this, heard this isn't good
+    layout = [[sg.Input(starting_path, 
+                        key='-path-', 
+                        expand_x=True, 
+                        tooltip='Displays current directory. You can input path to a directory and go to it using the Browse button.'), 
+                        sg.Button('Browse'), sg.Button('Back'), sg.Button('Next')],
               [sg.Tree(data=treedata,
                        headings=['Size', ],
-                       auto_size_columns=True,
+                       auto_size_columns=True, # should try {expand_x = True} instead
                        num_rows=20,
                        col0_width=40,
                        key='-TREE-',
@@ -41,30 +48,95 @@ def window_refresh():
                        enable_events=True),
                ],
               [sg.Button('Open'), sg.Button('Up'), sg.Button('Cancel')]]
-    window = sg.Window('Tree Element Test', layout)
+    window = sg.Window('File Browser', layout)
 
 add_files_in_folder('', starting_path)
 window_refresh()
 
 while True:  # Event Loop
     event, values = window.read()
+
     if event in (sg.WIN_CLOSED, 'Cancel'):
         break
+
+    if event == 'Next':  # navigating forwards on the path stack
+        path = nav.forward()
+        event_log.new_direction(event) # adding event to event_log
+
+        treedata = sg.TreeData()
+        add_files_in_folder('', path)
+        starting_path = path
+        window_refresh()
+
+    if event == 'Back': # navigating backwards on the path stack
+        path = nav.backward()
+        event_log.new_direction(event) # adding event to event_log
+        
+        treedata = sg.TreeData()
+        add_files_in_folder('', path)
+        starting_path = path
+        window_refresh()
+
+    if event == 'Browse': # implemented browse feature
+        path = pf.format_path (values['-path-'])
+
+        event_log.new_direction(event) # adding event to event_log
+        nav.new_direction(path) # adding path to top of stack
+
+        treedata = sg.TreeData()
+        add_files_in_folder('', path)
+        starting_path = path
+        window_refresh()
+
     # TODO: implement opening files through doubleclick
+
     if event == 'Open':
-        selected = ((values["-TREE-"][0]).replace('/', '\\'))
+        event_log.new_direction(event)  # adding event to event_log
+        selected = ((values["-TREE-"][0]).replace('/', '\\')) 
+
         if os.path.isdir(selected):
+            nav.new_direction(selected) # adding path to top of stack
             treedata = sg.TreeData()
             add_files_in_folder('', selected)
             window_refresh()
             starting_path=selected
         else:
             os.startfile(selected)
+
     if event == 'Up':
+        event_log.new_direction(event) # adding event to event_log
+        nav.new_direction(starting_path) # adding path to top of stack
+        path = pf.find_parent_path(starting_path) # did this to fix folder_up() 
+
         treedata = sg.TreeData()
-        add_files_in_folder('', os.path.dirname(starting_path))
+        add_files_in_folder('', path)  # changed os.path.dirname(starting_path) to path
+        starting_path = path # just in case
         window_refresh()
+
+    if event == '-TREE-': # my take at double-click 
+        if event_log.get_current_path() == values['-TREE-'][0]:   # can't register quick double-clicks
+            selected = ((values["-TREE-"][0])).replace('/', '\\')  
+            if os.path.isdir(selected):
+                nav.new_direction(selected) # adding path to top of stack
+
+                treedata = sg.TreeData()
+                add_files_in_folder('', selected)
+                starting_path = selected
+                window_refresh() 
+            else:
+                os.startfile(selected)
+        else:
+            event_log.new_direction(values['-TREE-'][0])
 
 
 
 window.close()
+
+'''
+maybe make this a function:
+
+        treedata = sg.TreeData()
+        add_files_in_folder('', path)
+        starting_path = path
+        window_refresh() # need to change this to a function that refreshes the window and not creates a new one
+'''
