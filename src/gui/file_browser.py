@@ -1,142 +1,80 @@
-import sys
 import os
-import PySimpleGUI as sg
-import path_functions as pf
-from path_navigation import Navigator
-from icons import folder_icon, file_icon
 
-starting_path = sg.popup_get_folder('Folder to display', history=True, history_setting_filename='search_history', initial_folder='This PC')
-starting_path = pf.format_path(starting_path)   # just in case of random ///////////   or    D:/    or    D:
+# path-changing functions
+def find_parent_path(path = os.getcwd()):
+    '''return path of parent folder of current path   ||   should be used in conjunction with os.chdir() so the <cwd> is always the one displayed'''
+    
+    current_working_path = os.getcwd()
 
-event_log = Navigator()
-nav = Navigator()
-nav.append_path(starting_path)
+    try:
+        os.chdir(path)
+        os.chdir(os.pardir)
+        path = os.getcwd()
+    except:
+        print('\n Error occured during path manipulation! \n')
+        path = '.'
 
-if not starting_path:
-    sys.exit(0)
-
-treedata = sg.TreeData()
-
-
-
-def add_files_in_folder(parent, dirname):
-    files = os.listdir(dirname)
-    for f in files:
-        fullname = os.path.join(dirname, f)
-        if os.path.isdir(fullname):  # if it's a folder, add folder and recurse
-            treedata.Insert(parent, fullname, f, values=[], icon=folder_icon)
-        #add_files_in_folder(fullname, fullname)
-        else:
-            treedata.Insert(parent, fullname, f, values=[
-                os.stat(fullname).st_size], icon=file_icon)
-
-
-def window_refresh():
-    global window   # should try to change this, heard this isn't good
-    layout = [[sg.Input(starting_path, 
-                        key='-path-', 
-                        expand_x=True, 
-                        tooltip='Displays current directory. You can input path to a directory and go to it using the Browse button.'), 
-                        sg.Button('Browse'), sg.Button('Back'), sg.Button('Next')],
-              [sg.Tree(data=treedata,
-                       headings=['Size', ],
-                       auto_size_columns=True, # should try {expand_x = True} instead
-                       num_rows=20,
-                       col0_width=40,
-                       key='-TREE-',
-                       show_expanded=False,
-                       enable_events=True),
-               ],
-              [sg.Button('Open'), sg.Button('Up'), sg.Button('Cancel')]]
-    window = sg.Window('File Browser', layout)
-
-add_files_in_folder('', starting_path)
-window_refresh()
-
-while True:  # Event Loop
-    event, values = window.read()
-
-    if event in (sg.WIN_CLOSED, 'Cancel'):
-        break
-
-    if event == 'Next':  # navigating forwards on the path stack
-        path = nav.forward()
-        event_log.new_direction(event) # adding event to event_log
-
-        treedata = sg.TreeData()
-        add_files_in_folder('', path)
-        starting_path = path
-        window_refresh()
-
-    if event == 'Back': # navigating backwards on the path stack
-        path = nav.backward()
-        event_log.new_direction(event) # adding event to event_log
+    os.chdir(current_working_path)
+    return path
         
-        treedata = sg.TreeData()
-        add_files_in_folder('', path)
-        starting_path = path
-        window_refresh()
 
-    if event == 'Browse': # implemented browse feature
-        path = pf.format_path (values['-path-'])
+def format_path(path = ''):
+    '''removes unnecessary "/" characters and returns a directory path-like string   ||   fixes some mistakes with root folder'''
 
-        event_log.new_direction(event) # adding event to event_log
-        nav.new_direction(path) # adding path to top of stack
+    if path == '': # get root directory of <cwd>
+        print ('\n Error occured! Path is blank. \n')
+        return '/'
+    
+    if path == '.': # get <cwd> as absolute path
+        return os.getcwd()
 
-        treedata = sg.TreeData()
-        add_files_in_folder('', path)
-        starting_path = path
-        window_refresh()
+    if path == '..': # get parent folder of <cwd> as absolute path
+        return find_parent_path('.')
 
-    # TODO: implement opening files through doubleclick
+    if len(path) == 1: # append ':/' to single letter path
+        return fix_root(path)
 
-    if event == 'Open':
-        event_log.new_direction(event)  # adding event to event_log
-        selected = ((values["-TREE-"][0]).replace('/', '\\')) 
+    folder_list = convert_to_folder_list(path)
+    path = convert_to_path(folder_list)
+        
+    path = os.path.normpath(path) # getting rid of '/..' and '/.' in a way that makes sense
+    path = path.replace('\\', '/') # cuz of linux
 
-        if os.path.isdir(selected):
-            nav.new_direction(selected) # adding path to top of stack
-            treedata = sg.TreeData()
-            add_files_in_folder('', selected)
-            window_refresh()
-            starting_path=selected
+    return path
+    
+# conversion functions
+def convert_to_path(folders_list):
+    '''convert list into a directory path-like string separated by "/" '''
+
+    path = ''.join(folder + '/' for folder in folders_list)[:-1]
+
+    return path
+
+
+def convert_to_folder_list(path):
+    '''convert a directory path-like string separated by "/" into a list'''
+
+    path = path.replace('\\', '/')
+    split_path = path.split('/')
+    folder_list = [x.strip() for x in split_path if x != ''] # x is folder name
+
+    return folder_list
+
+
+
+# check-it and fix-it functions
+def path_is_okay(path):
+    '''checks if some rules are not of paths are not followed  ||  NOT USED ANYMORE'''
+    # deprecated
+    return os.path.exists(path)
+
+    
+def fix_root(_path):
+    '''appends ':/' to single letter paths'''
+    path = _path.upper()
+
+    if len(path) == 1: 
+        if path.isalpha(): # cuz windows
+            return path + ':/'
         else:
-            os.startfile(selected)
-
-    if event == 'Up':
-        event_log.new_direction(event) # adding event to event_log
-        nav.new_direction(starting_path) # adding path to top of stack
-        path = pf.find_parent_path(starting_path) # did this to fix folder_up() 
-
-        treedata = sg.TreeData()
-        add_files_in_folder('', path)  # changed os.path.dirname(starting_path) to path
-        starting_path = path # just in case
-        window_refresh()
-
-    if event == '-TREE-': # my take at double-click 
-        if event_log.get_current_path() == values['-TREE-'][0]:   # can't register quick double-clicks
-            selected = ((values["-TREE-"][0])).replace('/', '\\')  
-            if os.path.isdir(selected):
-                nav.new_direction(selected) # adding path to top of stack
-
-                treedata = sg.TreeData()
-                add_files_in_folder('', selected)
-                starting_path = selected
-                window_refresh() 
-            else:
-                os.startfile(selected)
-        else:
-            event_log.new_direction(values['-TREE-'][0])
-
-
-
-window.close()
-
-'''
-maybe make this a function:
-
-        treedata = sg.TreeData()
-        add_files_in_folder('', path)
-        starting_path = path
-        window_refresh() # need to change this to a function that refreshes the window and not creates a new one
-'''
+            return '/'
