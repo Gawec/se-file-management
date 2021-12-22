@@ -1,4 +1,5 @@
 import os
+from sys import platform
 
 # path-changing functions
 def find_parent_path(path = os.getcwd()):
@@ -39,6 +40,9 @@ def format_path(path = ''):
         
     path = os.path.normpath(path) # getting rid of '/..' and '/.' in a way that makes sense
     path = path.replace('\\', '/') # cuz of linux
+
+    if platform == "linux" or platform == "linux2":
+        path = "/" + path
 
     return path
     
