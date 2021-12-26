@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QRegExp
-from PyQt5.QtGui import QPixmap, QRegExpValidator
-from PyQt5.QtWidgets import QApplication, QCheckBox, QFileDialog, QFormLayout, QGridLayout, QHBoxLayout, QInputDialog, QVBoxLayout, QLineEdit, QMessageBox, QPlainTextEdit, QPushButton, QSpinBox, QTabWidget, QWidget
+from PyQt5.QtGui import QIcon, QPixmap, QRegExpValidator
+from PyQt5.QtWidgets import QApplication, QCheckBox, QFileDialog, QFormLayout, QGridLayout, QHBoxLayout, QInputDialog, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QLineEdit, QMessageBox, QPlainTextEdit, QPushButton, QSpinBox, QTabWidget, QWidget
 from PyQt5.QtWidgets import QLabel
 from PyQt5.QtWidgets import QMainWindow
 
@@ -51,9 +51,21 @@ class Window(QMainWindow):
                 msg.setWindowTitle("Error")
                 msg.exec_()
 
+    def __source_tree_fill(self, tree, path):
+        for element in os.listdir(path):
+            path_info = os.path.join(path, element)
+            parent_itm = QTreeWidgetItem(tree, [os.path.basename(element)])
+            if os.path.isdir(path_info):
+                self.__source_tree_fill(parent_itm, path_info)
+                parent_itm.setIcon(0, QIcon('../assets/folder.ico'))
+            else:
+                parent_itm.setIcon(0, QIcon('../assets/file.ico'))
+
     def __on_select_source(self):
         folderName = QFileDialog.getExistingDirectory(self, "Select Directory")
         self.ftt.conf["folder_input"] = folderName
+        self.sourceTree.clear()
+        self.__source_tree_fill(self.sourceTree, folderName)
         self.__update_simulation()
 
     def __on_select_target(self):
@@ -74,7 +86,7 @@ class Window(QMainWindow):
     def __on_change_seed(self):
         self.ftt.conf["random_seed"] = 0.01 * float(self.seed_input.text())
         self.__update_simulation()
-
+    
     def createTab1(self):
         self.tab_1 = QWidget()
         outer_layout = QVBoxLayout()
@@ -118,6 +130,19 @@ class Window(QMainWindow):
         options_layout.addRow("Seed for RNG", self.seed_input)
 
         outer_layout.addLayout(options_layout)
+
+        # folder trees
+        trees_layout = QHBoxLayout()
+
+        self.sourceTree = QTreeWidget()
+        self.sourceTree.setHeaderLabel("Source Folder")
+        trees_layout.addWidget(self.sourceTree)
+
+        self.targetTree = QTreeWidget()
+        self.targetTree.setHeaderLabel("Simulated Target Folder")
+        trees_layout.addWidget(self.targetTree)
+
+        outer_layout.addLayout(trees_layout)        
 
         self.tab_1.setLayout(outer_layout)
 
