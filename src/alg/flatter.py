@@ -1,6 +1,6 @@
 from alg.regex import Regex
 from os import listdir, mkdir, path
-from os.path import join as os_join, isfile, isdir
+from os.path import join as os_join, isfile, isdir, basename
 import random
 from shutil import move, rmtree
 
@@ -82,10 +82,10 @@ class Flatter:
         out_path = None
         if folder1_prob > self.conf["folders_ratio"]:
             out_path = os_join(target_path1, out_filename)
-            self.sim_friendly_output[0].append(out_filename)
+            self.sim_friendly_output[0].append(basename(out_filename))
         else:
             out_path = os_join(target_path2, out_filename)
-            self.sim_friendly_output[1].append(out_filename)
+            self.sim_friendly_output[1].append(basename(out_filename))
         self.sim_arr.append((input_file, out_path))
 
     def __flatten_recur(self, input_path, action=None):
@@ -106,6 +106,7 @@ class Flatter:
     def simulate_flatten(self):
         if self.regex is None:
             raise Exception("No regex specified!")
+        self.regex.set_folder_main_path(self.conf["folder_input"])
 
         if self.conf["folder2_enable"]:
             random.seed(self.conf["random_seed"])
@@ -118,6 +119,7 @@ class Flatter:
     def run_flatten(self):
         if self.regex is None:
             raise Exception("No regex specified!")
+        self.regex.set_folder_main_path(self.conf["folder_input"])
 
         # mkdir(self.conf["folder_output"])
         if self.conf["folder2_enable"]:

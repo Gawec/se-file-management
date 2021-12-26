@@ -39,17 +39,17 @@ class Window(QMainWindow):
 
     def __update_simulation(self):
         if self.ftt.conf["folder_input"] != None and self.ftt.conf["folder_output"] != None:
-            try:
-                self.simulation = self.ftt.simulate_flatten()
-                print(self.simulation)
-            except Exception as e:
-                msg = QMessageBox()
-                msg.setIcon(QMessageBox.Critical)
-                msg.setText("Error")
-                msg.setInformativeText(
-                    "Wrong target or source folder selected!\n\n" + str(e))
-                msg.setWindowTitle("Error")
-                msg.exec_()
+            # try:
+            self.simulation = self.ftt.simulate_flatten()
+            self.__target_tree_fill(self.targetTree)
+            # except Exception as e:
+            #     msg = QMessageBox()
+            #     msg.setIcon(QMessageBox.Critical)
+            #     msg.setText("Error")
+            #     msg.setInformativeText(
+            #         "Wrong target or source folder selected!\n\n" + str(e))
+            #     msg.setWindowTitle("Error")
+            #     msg.exec_()
 
     def __source_tree_fill(self, tree, path):
         for element in os.listdir(path):
@@ -57,9 +57,30 @@ class Window(QMainWindow):
             parent_itm = QTreeWidgetItem(tree, [os.path.basename(element)])
             if os.path.isdir(path_info):
                 self.__source_tree_fill(parent_itm, path_info)
-                parent_itm.setIcon(0, QIcon('../assets/folder.ico'))
+                parent_itm.setIcon(0, QIcon('./assets/folder.ico'))
             else:
-                parent_itm.setIcon(0, QIcon('../assets/file.ico'))
+                parent_itm.setIcon(0, QIcon('./assets/file.ico'))
+    
+    def __target_tree_fill(self, tree):
+        tree.clear()
+        log = QTreeWidgetItem(tree, ["move_report.log"])
+        log.setIcon(0, QIcon('assets/file.ico'))
+        if self.ftt.conf["folder2_enable"]:
+            folder_1 = QTreeWidgetItem(tree, ["1"])
+            folder_1.setIcon(0, QIcon('assets/folder.ico'))
+            for f in self.simulation[1][0]:
+                file_1 = QTreeWidgetItem(folder_1, [f])
+                file_1.setIcon(0, QIcon('assets/file.ico'))
+
+            folder_2 = QTreeWidgetItem(tree, ["2"])
+            folder_2.setIcon(0, QIcon('assets/folder.ico'))
+            for f in self.simulation[1][1]:
+                file_2 = QTreeWidgetItem(folder_2, [f])
+                file_2.setIcon(0, QIcon('assets/file.ico'))
+        else:
+            for f in self.simulation[1][0]:
+                file = QTreeWidgetItem(tree, [f])
+                file.setIcon(0, QIcon('assets/file.ico'))
 
     def __on_select_source(self):
         folderName = QFileDialog.getExistingDirectory(self, "Select Directory")
@@ -80,12 +101,14 @@ class Window(QMainWindow):
         self.__update_simulation()
 
     def __on_change_ratio(self):
-        self.ftt.conf["folders_ratio"] = 0.01 * float(self.ratio_input.text())
-        self.__update_simulation()
+        if self.ratio_input.text() != '':
+            self.ftt.conf["folders_ratio"] = 0.01 * float(self.ratio_input.text())
+            self.__update_simulation()
 
     def __on_change_seed(self):
-        self.ftt.conf["random_seed"] = 0.01 * float(self.seed_input.text())
-        self.__update_simulation()
+        if self.seed_input.text():
+            self.ftt.conf["random_seed"] = 0.01 * float(self.seed_input.text())
+            self.__update_simulation()
     
     def createTab1(self):
         self.tab_1 = QWidget()
@@ -116,6 +139,7 @@ class Window(QMainWindow):
             QRegExp("[0-9]{2}"), self.ratio_input)
         self.ratio_input.setValidator(ratio_validator)
         self.ratio_input.setEnabled(False)
+        self.ratio_input.setText(str(self.ftt.conf["folders_ratio"]))
         self.ratio_input.textChanged.connect(self.__on_change_ratio)
         self.dimmableWidgets1.append(self.ratio_input)
         options_layout.addRow("Folder ratio in %", self.ratio_input)
@@ -125,6 +149,7 @@ class Window(QMainWindow):
         seed_validator = QRegExpValidator(QRegExp("[0-9]{4}"), self.seed_input)
         self.seed_input.setValidator(seed_validator)
         self.seed_input.setEnabled(False)
+        self.seed_input.setText(str(self.ftt.conf["random_seed"]))
         self.seed_input.textChanged.connect(self.__on_change_seed)
         self.dimmableWidgets1.append(self.seed_input)
         options_layout.addRow("Seed for RNG", self.seed_input)
