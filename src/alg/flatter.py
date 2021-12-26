@@ -9,7 +9,7 @@ from shutil import move, rmtree
     examplary config needed to be passed to alg to perform its task
     {
         folder_input        - name of the input folder (str)
-        folder_output       - folder to which files will be moved (str)
+        folder_output       - folder to which files will be moved, expect that it exists (str)
         log_filename        - log filename (str)
         folder2_enable      - if True, files will be divided to two folders (bool)
         folder2_output      - second folder to which files will be put (str)
@@ -110,7 +110,7 @@ class Flatter:
         if self.regex is None:
             raise Exception("No regex specified!")
         
-        mkdir(self.conf["folder_output"])
+        # mkdir(self.conf["folder_output"])
         if self.conf["folder2_enable"]:
             random.seed(self.conf["random_seed"])
             mkdir(os_join(self.conf["folder_output"], "1"))
