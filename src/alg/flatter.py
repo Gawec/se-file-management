@@ -1,9 +1,13 @@
-from os import listdir, mkdir
+from os import listdir, mkdir, path
 from os.path import join as os_join, isfile, isdir
 import random
-import time
-from regex import Regex
 from shutil import move, rmtree
+
+import sys
+current = path.dirname(path.realpath(__file__))
+parent = path.dirname(current)
+sys.path.append(parent)
+from alg.regex import Regex
 
 '''
     examplary config needed to be passed to alg to perform its task
@@ -20,9 +24,9 @@ from shutil import move, rmtree
 '''
 
 DEFAULT_CONFIG = {
-    "folder_input": "test",
-    "folder_output": "test_out",
-    "folder2_enable": True,
+    "folder_input": None,
+    "folder_output": None,
+    "folder2_enable": False,
     "folders_ratio": 0.3,
     "random_seed": 2137,
     "file_rename_regex": None,
@@ -37,6 +41,9 @@ class Flatter:
 
     def __init__(self, config=DEFAULT_CONFIG):
         self.conf = config
+
+    def update_config(self, new_config):
+        self.conf = new_config
 
     def set_regex(self, regex):
         self.regex = regex
