@@ -24,8 +24,8 @@ sys.path.append(parent)
 '''
 
 DEFAULT_CONFIG = {
-    "folder_input": None,
-    "folder_output": None,
+    "folder_input": "",
+    "folder_output": "",
     "folder2_enable": False,
     "folders_ratio": 0.3,
     "random_seed": 2137,

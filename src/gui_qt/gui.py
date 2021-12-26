@@ -38,7 +38,7 @@ class Window(QMainWindow):
         self.fileMenu.addAction('Close', self.close)
 
     def __update_simulation(self):
-        if self.ftt.conf["folder_input"] != None and self.ftt.conf["folder_output"] != None:
+        if self.ftt.conf["folder_input"] != "" and self.ftt.conf["folder_output"] != "":
             try:
                 self.simulation = self.ftt.simulate_flatten()
                 self.__target_tree_fill(self.targetTree)
@@ -85,6 +85,8 @@ class Window(QMainWindow):
 
     def __on_select_source(self):
         folderName = QFileDialog.getExistingDirectory(self, "Select Directory")
+        if folderName == '':
+            return
         self.ftt.conf["folder_input"] = folderName
         self.sourceTree.clear()
         self.__source_tree_fill(self.sourceTree, folderName)
