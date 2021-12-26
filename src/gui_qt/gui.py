@@ -1,3 +1,5 @@
+from alg.regex import Regex
+from alg.flatter import Flatter
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QRegExp
 from PyQt5.QtGui import QIcon, QPixmap, QRegExpValidator
@@ -10,8 +12,6 @@ import sys
 current = os.path.dirname(os.path.realpath(__file__))
 parent = os.path.dirname(current)
 sys.path.append(parent)
-from alg.flatter import Flatter
-from alg.regex import Regex
 
 
 class Window(QMainWindow):
@@ -39,17 +39,18 @@ class Window(QMainWindow):
 
     def __update_simulation(self):
         if self.ftt.conf["folder_input"] != None and self.ftt.conf["folder_output"] != None:
-            # try:
-            self.simulation = self.ftt.simulate_flatten()
-            self.__target_tree_fill(self.targetTree)
-            # except Exception as e:
-            #     msg = QMessageBox()
-            #     msg.setIcon(QMessageBox.Critical)
-            #     msg.setText("Error")
-            #     msg.setInformativeText(
-            #         "Wrong target or source folder selected!\n\n" + str(e))
-            #     msg.setWindowTitle("Error")
-            #     msg.exec_()
+            try:
+                self.simulation = self.ftt.simulate_flatten()
+                self.__target_tree_fill(self.targetTree)
+                self.run_flatter.setEnabled(True)
+            except Exception as e:
+                msg = QMessageBox()
+                msg.setIcon(QMessageBox.Critical)
+                msg.setText("Error")
+                msg.setInformativeText(
+                    "Wrong target or source folder selected!\n\n" + str(e))
+                msg.setWindowTitle("Error")
+                msg.exec_()
 
     def __source_tree_fill(self, tree, path):
         for element in os.listdir(path):
@@ -60,7 +61,7 @@ class Window(QMainWindow):
                 parent_itm.setIcon(0, QIcon('./assets/folder.ico'))
             else:
                 parent_itm.setIcon(0, QIcon('./assets/file.ico'))
-    
+
     def __target_tree_fill(self, tree):
         tree.clear()
         log = QTreeWidgetItem(tree, ["move_report.log"])
@@ -102,14 +103,33 @@ class Window(QMainWindow):
 
     def __on_change_ratio(self):
         if self.ratio_input.text() != '':
-            self.ftt.conf["folders_ratio"] = 0.01 * float(self.ratio_input.text())
+            self.ftt.conf["folders_ratio"] = 0.01 * \
+                float(self.ratio_input.text())
             self.__update_simulation()
 
     def __on_change_seed(self):
         if self.seed_input.text():
             self.ftt.conf["random_seed"] = 0.01 * float(self.seed_input.text())
             self.__update_simulation()
-    
+
+    def __on_run_flatter(self):
+        msg = QMessageBox()
+        try:
+            self.ftt.run_flatten()
+            msg.setIcon(QMessageBox.Information)
+            msg.setText("Success")
+            msg.setInformativeText(
+                "Flattened folder!\n\n")
+            msg.setWindowTitle("Success")
+            msg.exec_()
+        except Exception as e:
+            msg.setIcon(QMessageBox.Critical)
+            msg.setText("Error")
+            msg.setInformativeText(
+                "Failed to run flatter!\n\n" + str(e))
+            msg.setWindowTitle("Error")
+            msg.exec_()
+
     def createTab1(self):
         self.tab_1 = QWidget()
         outer_layout = QVBoxLayout()
@@ -167,7 +187,18 @@ class Window(QMainWindow):
         self.targetTree.setHeaderLabel("Simulated Target Folder")
         trees_layout.addWidget(self.targetTree)
 
-        outer_layout.addLayout(trees_layout)        
+        outer_layout.addLayout(trees_layout)
+
+        # execute button
+        execute_layout = QVBoxLayout()
+
+        self.run_flatter = QPushButton(self.tab_1)
+        self.run_flatter.setText("Run Flatter")
+        self.run_flatter.clicked.connect(self.__on_run_flatter)
+        self.run_flatter.setEnabled(False)
+        execute_layout.addWidget(self.run_flatter)
+
+        outer_layout.addLayout(execute_layout)
 
         self.tab_1.setLayout(outer_layout)
 
