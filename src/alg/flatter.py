@@ -25,6 +25,7 @@ DEFAULT_CONFIG = {
     "folder2_enable": True,
     "folders_ratio": 0.3,
     "random_seed": 2137,
+    "file_rename_regex": None,
     "ignore_file_regex": None
 }
 
