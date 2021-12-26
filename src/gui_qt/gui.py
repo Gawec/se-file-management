@@ -13,9 +13,9 @@ class Window(QMainWindow):
 
         self.tabs = QTabWidget()
 
+        self.dimmableWidgets1 = []
         self.createTab1()
         self.tabs.addTab(self.tab_1, "Flatten")
-
 
         self.createMenu()
 
@@ -31,6 +31,10 @@ class Window(QMainWindow):
         self.tab_1.resize(self.tab_1_pixmap.width(),
                           self.tab_1_pixmap.height())
         self.tab_1_label.setPixmap(self.tab_1_pixmap)
+
+    def _dimm1(self):
+        for w in self.dimmableWidgets1:
+            w.setEnabled(self.checkbox_folder2.isChecked())
 
     def createTab1(self):
         self.tab_1 = QWidget()
@@ -51,29 +55,30 @@ class Window(QMainWindow):
         options_layout.addRow("Target Folder", open_target_folder)
 
         # Checkbox for enabling two folders output
-        checkbox_folder2 = QCheckBox()
-        options_layout.addRow("Split to two folders", checkbox_folder2)
+        self.checkbox_folder2 = QCheckBox()
+        self.checkbox_folder2.stateChanged.connect(self._dimm1)
+        options_layout.addRow("Split to two folders", self.checkbox_folder2)
 
         # Folders ratio input field
-        ratio_input = QLineEdit()
-        ratio_validator = QRegExpValidator(QRegExp("[0-9]{2}"), ratio_input)
-        ratio_input.setValidator(ratio_validator)
-        options_layout.addRow("Folder ratio in %", ratio_input)
+        self.ratio_input = QLineEdit()
+        ratio_validator = QRegExpValidator(
+            QRegExp("[0-9]{2}"), self.ratio_input)
+        self.ratio_input.setValidator(ratio_validator)
+        self.ratio_input.setEnabled(False)
+        self.dimmableWidgets1.append(self.ratio_input)
+        options_layout.addRow("Folder ratio in %", self.ratio_input)
 
         # Random seed input field
-        seed_input = QLineEdit()
-        seed_validator = QRegExpValidator(QRegExp("[0-9]{4}"), seed_input)
-        seed_input.setValidator(seed_validator)
-        options_layout.addRow("Seed for RNG", seed_input)
+        self.seed_input = QLineEdit()
+        seed_validator = QRegExpValidator(QRegExp("[0-9]{4}"), self.seed_input)
+        self.seed_input.setValidator(seed_validator)
+        self.seed_input.setEnabled(False)
+        self.dimmableWidgets1.append(self.seed_input)
+        options_layout.addRow("Seed for RNG", self.seed_input)
 
         outer_layout.addLayout(options_layout)
 
-
-
         self.tab_1.setLayout(outer_layout)
-
-        
-
 
         self.setCentralWidget(self.tabs)
 
