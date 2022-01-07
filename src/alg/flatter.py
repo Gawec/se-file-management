@@ -1,15 +1,19 @@
-from os import listdir, mkdir
-from os.path import join as os_join, isfile, isdir
+from alg.regex import Regex
+from os import listdir, mkdir, path
+from os.path import join as os_join, isfile, isdir, basename
 import random
-import time
-from regex import Regex
 from shutil import move, rmtree
+
+import sys
+current = path.dirname(path.realpath(__file__))
+parent = path.dirname(current)
+sys.path.append(parent)
 
 '''
     examplary config needed to be passed to alg to perform its task
     {
         folder_input        - name of the input folder (str)
-        folder_output       - folder to which files will be moved (str)
+        folder_output       - folder to which files will be moved, expect that it exists (str)
         log_filename        - log filename (str)
         folder2_enable      - if True, files will be divided to two folders (bool)
         folder2_output      - second folder to which files will be put (str)
@@ -20,13 +24,12 @@ from shutil import move, rmtree
 '''
 
 DEFAULT_CONFIG = {
-    "folder_input": "test",
-    "folder_output": "test_out",
-    "log_filename": "test_log",
-    "folder2_enable": True,
-    "folder2_output": "test_out2",
+    "folder_input": "",
+    "folder_output": "",
+    "folder2_enable": False,
     "folders_ratio": 0.3,
     "random_seed": 2137,
+    "file_rename_regex": None,
     "ignore_file_regex": None
 }
 
@@ -39,6 +42,9 @@ class Flatter:
     def __init__(self, config=DEFAULT_CONFIG):
         self.conf = config
 
+    def update_config(self, new_config):
+        self.conf = new_config
+
     def set_regex(self, regex):
         self.regex = regex
 
@@ -46,14 +52,18 @@ class Flatter:
         out_filename = self.regex.create_name(input_file)
 
         folder1_prob = 1.0
+        target_path1 = self.conf["folder_output"]
+        target_path2 = None
         if self.conf["folder2_enable"]:
             folder1_prob = random.random()
+            target_path1 = os_join(self.conf["folder_output"], "1")
+            target_path2 = os_join(self.conf["folder_output"], "2")
 
         out_path = None
         if folder1_prob > self.conf["folders_ratio"]:
-            out_path = os_join(self.conf["folder_output"], out_filename)
+            out_path = os_join(target_path1, out_filename)
         else:
-            out_path = os_join(self.conf["folder2_output"], out_filename)
+            out_path = os_join(target_path2, out_filename)
 
         move(input_file, out_path)
         self.log.write(f"{input_file} moved_to_==> {out_path}\n")
@@ -62,15 +72,20 @@ class Flatter:
         out_filename = self.regex.create_name(input_file)
 
         folder1_prob = 1.0
+        target_path1 = self.conf["folder_output"]
+        target_path2 = None
         if self.conf["folder2_enable"]:
             folder1_prob = random.random()
+            target_path1 = os_join(self.conf["folder_output"], "1")
+            target_path2 = os_join(self.conf["folder_output"], "2")
 
         out_path = None
         if folder1_prob > self.conf["folders_ratio"]:
-            out_path = os_join(self.conf["folder_output"], out_filename)
+            out_path = os_join(target_path1, out_filename)
+            self.sim_friendly_output[0].append(basename(out_filename))
         else:
-            out_path = os_join(self.conf["folder2_output"], out_filename)
-
+            out_path = os_join(target_path2, out_filename)
+            self.sim_friendly_output[1].append(basename(out_filename))
         self.sim_arr.append((input_file, out_path))
 
     def __flatten_recur(self, input_path, action=None):
@@ -91,26 +106,29 @@ class Flatter:
     def simulate_flatten(self):
         if self.regex is None:
             raise Exception("No regex specified!")
+        self.regex.set_folder_main_path(self.conf["folder_input"])
 
         if self.conf["folder2_enable"]:
             random.seed(self.conf["random_seed"])
 
         self.sim_arr = []
+        self.sim_friendly_output = ([], [])
         self.__flatten_recur(self.conf["folder_input"], self.__simulate_move)
-        return self.sim_arr
+        return self.sim_arr, self.sim_friendly_output
 
     def run_flatten(self):
         if self.regex is None:
             raise Exception("No regex specified!")
+        self.regex.set_folder_main_path(self.conf["folder_input"])
 
+        # mkdir(self.conf["folder_output"])
         if self.conf["folder2_enable"]:
             random.seed(self.conf["random_seed"])
+            mkdir(os_join(self.conf["folder_output"], "1"))
+            mkdir(os_join(self.conf["folder_output"], "2"))
 
-        self.log = open(f"{self.conf['log_filename']}_{time.time()}.log", 'w')
-
-        mkdir(self.conf["folder_output"])
-        if self.conf["folder2_enable"]:
-            mkdir(self.conf["folder2_output"])
+        self.log = open(
+            os_join(self.conf["folder_output"], "move_report.log"), "w")
 
         self.__flatten_recur(self.conf["folder_input"], self.__move_and_log)
         # rmtree(self.conf["folder_input"])
