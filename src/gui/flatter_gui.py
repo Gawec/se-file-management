@@ -1,14 +1,18 @@
-from alg.regex import Regex
+import os
+import sys
+
 from alg.flatter import Flatter
+from alg.regex import Regex
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QRegExp
 from PyQt5.QtGui import QIcon, QPixmap, QRegExpValidator
-from PyQt5.QtWidgets import QApplication, QCheckBox, QFileDialog, QFormLayout, QGridLayout, QHBoxLayout, QInputDialog, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QLineEdit, QMessageBox, QPlainTextEdit, QPushButton, QSpinBox, QTabWidget, QWidget
-from PyQt5.QtWidgets import QLabel
-from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtWidgets import (QApplication, QCheckBox, QFileDialog, QFormLayout,
+                             QGridLayout, QHBoxLayout, QInputDialog, QLabel,
+                             QLineEdit, QMainWindow, QMessageBox,
+                             QPlainTextEdit, QPushButton, QSpinBox, QTabWidget,
+                             QTreeWidget, QTreeWidgetItem, QVBoxLayout,
+                             QWidget)
 
-import os
-import sys
 current = os.path.dirname(os.path.realpath(__file__))
 parent = os.path.dirname(current)
 sys.path.append(parent)
