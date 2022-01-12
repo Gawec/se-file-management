@@ -132,7 +132,7 @@ def main():
 
                     os.chdir(backup_path)
                     window_refresh(window)
-
+  
   
         if event == 'Flatten':
 
