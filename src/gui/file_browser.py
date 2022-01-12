@@ -33,29 +33,13 @@ def find_files_in_folder(dirname, find):
 
     return treedata
 
-def exclude_files_in_folder(dirname, find):
-    treedata = sg.TreeData()
-    files = os.listdir(dirname)
-    for f in files:
-        if f != find:
-            fullname = os.path.join(dirname, f)
-            if os.path.isdir(fullname):  # if it's a folder, add folder and recurse
-                treedata.Insert('', fullname, f, values=[], icon=folder_icon)
-            else:
-                treedata.Insert('', fullname, f, values=[
-                            os.stat(fullname).st_size], icon=file_icon)
-
-    return treedata
-
-def window_open(window, path, filtr_active, exclude_active, filtr):
+def window_open(window, path, filtr_active, filtr):
     # global window   # should try to change this, heard this isn't good
 
-    if filtr_active == False and exclude_active == False:
+    if filtr_active == False:
         treedata = add_files_in_folder(path)
-    elif filtr_active == True:
-        treedata = find_files_in_folder(path, filtr)
     else:
-        treedata = exclude_files_in_folder(path,filtr)
+        treedata = find_files_in_folder(path, filtr)
 
     layout = [[sg.Button('Up', s=(5)), sg.Button('Back',  s=(5)), sg.Button('Next',  s=(5)),
                sg.Input(path,
@@ -70,7 +54,7 @@ def window_open(window, path, filtr_active, exclude_active, filtr):
                         expand_x=True,
                         tooltip='You can input phrase for which the program will filter in the directory',
                         size=(30)),
-               sg.Button('Filter',  s=(10)),sg.Button('Exclude',  s=(10))
+               sg.Button('Filter',  s=(10))
               ],
               [sg.Tree(data=treedata,
                        headings=['Size'],
@@ -90,9 +74,9 @@ def window_open(window, path, filtr_active, exclude_active, filtr):
     window[0]['-TREE-'].bind('<Double-Button-1>', '_double_clicked')
     window[0]['-TREE-'].bind('<Return>', 'Open')
 
-def window_refresh(window, path = '_empty_', filtr_active = False, exclude_active = False, filtr = ''):  # path = os.getcwd() doesn't work propertly it returns the initial working dir from when the app started
+def window_refresh(window, path = '_empty_', filtr_active = False, filtr = ''):  # path = os.getcwd() doesn't work propertly it returns the initial working dir from when the app started
     if path == '_empty_' or not os.path.exists(path):
         path = os.getcwd()
 
     window[0].close()
-    window_open(window, path, filtr_active, exclude_active, filtr)
+    window_open(window, path, filtr_active, filtr)
