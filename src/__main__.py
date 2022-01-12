@@ -103,25 +103,12 @@ def main():
 
             try:
                 nav.new_direction(path)  # adding path to top of stack
-                window_refresh(window,path,True,False,filtr)
+                window_refresh(window,path,True,filtr)
             except:
                 print('You do not have the permission to access this folder!')
                 sg.popup_ok('You do not have the permission to access this folder!', 'Aborting action...', keep_on_top=True)
                 os.chdir(backup_path)
                 window_refresh(window)
-
-        if event == 'Exclude':
-            path = os.getcwd()
-            filtr = values['-filterBar-']
-
-            try:
-                nav.new_direction(path)  # adding path to top of stack
-                window_refresh(window,path,False,True,filtr)
-            except:
-                print('You do not have the permission to access this folder!')
-                sg.popup_ok('You do not have the permission to access this folder!', 'Aborting action...', keep_on_top=True)
-                os.chdir(backup_path)
-                window_refresh(window)            
 
         if event in ('Open', '-TREE-_double_clicked', '-TREE-Open') :
             backup_path = os.getcwd()
