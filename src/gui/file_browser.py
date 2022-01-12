@@ -44,11 +44,15 @@ def window_open(window, path):
                        enable_events=True,
                        expand_x=True),
                ],
-              [sg.Button('Open',  s=(10)), sg.Button('Cancel', s=(10)), sg.Button('Flatten',  s=(10))]]
+              [sg.Button('Open',  s=(10)), sg.Button('Cancel', s=(10)), sg.Button('Flatten',  s=(10)), sg.Button('Enter-key', bind_return_key = True, visible = False)]]
 
-    window[0] = sg.Window('File Browser', layout)
+    window[0] = sg.Window('File Browser', layout, finalize = True)
+    window[0]['-TREE-'].bind('<Double-Button-1>', '_double_clicked')
+    window[0]['-TREE-'].bind('<Return>', 'Open')
 
+def window_refresh(window, path = '_empty_'):  # path = os.getcwd() doesn't work propertly it returns the initial working dir from when the app started
+    if path == '_empty_' or not os.path.exists(path):
+        path = os.getcwd()
 
-def window_refresh(window, path=os.getcwd()):
     window[0].close()
     window_open(window, path)

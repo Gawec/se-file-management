@@ -22,9 +22,9 @@ def find_parent_path(path = os.getcwd()):
 def format_path(path = ''):
     '''removes unnecessary "/" characters and returns a directory path-like string   ||   fixes some mistakes with root folder'''
 
-    if path == '': # get root directory of <cwd>
+    if path == '' or path == '/' or path == '\\': # get root directory of <cwd>
         print ('\n Error occured! Path is blank. \n')
-        return '/'
+        return find_root()
     
     if path == '.': # get <cwd> as absolute path
         return os.getcwd()
@@ -32,7 +32,7 @@ def format_path(path = ''):
     if path == '..': # get parent folder of <cwd> as absolute path
         return find_parent_path('.')
 
-    if len(path) == 1: # append ':/' to single letter path
+    if platform == 'win32' and len(path) < 4: # append ':/' to single letter path for win32 platform
         return fix_root(path)
 
     folder_list = convert_to_folder_list(path)
@@ -76,9 +76,32 @@ def path_is_okay(path):
 def fix_root(_path):
     '''appends ':/' to single letter paths'''
     path = _path.upper()
+    if os.path.exists(path):
+        return path
 
-    if len(path) == 1: 
-        if path.isalpha(): # cuz windows
+    # Some hardcoding just in case
+
+    if path[0].isalpha(): # win32
+        if len(path) == 1: 
+            print ('function returned a possible root path for given disc letter...')
             return path + ':/'
-        else:
-            return '/'
+        elif len(path) == 2:
+            if path[1] == ':': # win32
+                return path + '/'
+        elif len(path) == 3:
+            if path[1:3] in (':/', ':\\'): # win32
+                return path
+            
+    print ('function returned root directory of current working folder due to error...')
+    return find_root()
+
+
+def find_root():
+    path = os.getcwd()
+    parent_path = find_parent_path(path)
+
+    while parent_path != path:
+        path = parent_path
+        parent_path = find_parent_path(path)
+
+    return path
