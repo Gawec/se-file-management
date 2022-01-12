@@ -1,15 +1,17 @@
-from alg.regex import Regex
-from os import listdir, mkdir, path
-from os.path import join as os_join, isfile, isdir, basename
 import random
+import sys
+from os import listdir, mkdir, path
+from os.path import basename, isdir, isfile
+from os.path import join as os_join
 from shutil import move, rmtree
 
-import sys
+from alg.regex import Regex
+
 current = path.dirname(path.realpath(__file__))
 parent = path.dirname(current)
 sys.path.append(parent)
 
-'''
+"""
     examplary config needed to be passed to alg to perform its task
     {
         folder_input        - name of the input folder (str)
@@ -21,7 +23,7 @@ sys.path.append(parent)
         random_seed         - seed for random file creation (int)
         ignore_file_regex   - string regex of files, that should be ignored (str/None)
     }
-'''
+"""
 
 DEFAULT_CONFIG = {
     "folder_input": "",
@@ -30,14 +32,14 @@ DEFAULT_CONFIG = {
     "folders_ratio": 0.3,
     "random_seed": 2137,
     "file_rename_regex": None,
-    "ignore_file_regex": None
+    "ignore_file_regex": None,
 }
 
 
 class Flatter:
-    '''
+    """
     algorithm responsible for flattening complex folders into flatten based on config
-    '''
+    """
 
     def __init__(self, config=DEFAULT_CONFIG):
         self.conf = config
@@ -66,7 +68,7 @@ class Flatter:
             out_path = os_join(target_path2, out_filename)
 
         move(input_file, out_path)
-        self.log.write(f"{input_file} moved_to_==> {out_path}\n")
+        self.log.write(f"{input_file},{out_path}\n")
 
     def __simulate_move(self, input_file):
         out_filename = self.regex.create_name(input_file)
@@ -93,7 +95,7 @@ class Flatter:
         files = [f for f in dirs if isfile(os_join(input_path, f))]
         folders = [f for f in dirs if isdir(os_join(input_path, f))]
         for f in files:
-            if self.regex.check_if_ignore(f):
+            if not self.regex.check_if_accept(f):
                 continue
             full_path = os_join(input_path, f)
             action(full_path)
@@ -127,8 +129,7 @@ class Flatter:
             mkdir(os_join(self.conf["folder_output"], "1"))
             mkdir(os_join(self.conf["folder_output"], "2"))
 
-        self.log = open(
-            os_join(self.conf["folder_output"], "move_report.log"), "w")
+        self.log = open(os_join(self.conf["folder_output"], "move_report.log"), "w")
 
         self.__flatten_recur(self.conf["folder_input"], self.__move_and_log)
         # rmtree(self.conf["folder_input"])
@@ -136,9 +137,9 @@ class Flatter:
 
     def retrieve_from_log(self, log_name):
         dest_src = []
-        with open(log_name, 'r') as log:
+        with open(log_name, "r") as log:
             for line in log:
-                dest, source = line.split(" moved_to_==> ")
+                dest, source = line.split(",")
                 source = source[:-1]
                 dest_src.append(tuple((dest, source)))
         failed_files = []
