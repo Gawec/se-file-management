@@ -2,7 +2,7 @@ import os
 import sys
 
 import PySimpleGUI as sg
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QInputDialog
 
 from gui.file_browser import window_refresh
 from gui.flatter_gui import Window
@@ -132,7 +132,28 @@ def main():
 
                     os.chdir(backup_path)
                     window_refresh(window)
-  
+        
+        if event == 'Rename':
+            backup_path = os.getcwd()
+
+            try:
+                selected = format_path(values["-TREE-"][0])
+            except IndexError:
+                print('Nothing was selected. Canceling action...')
+            else:
+                try:
+                    app = QApplication([])
+                    newName, ok = QInputDialog.getText(None,'Choose new name','Enter new name:') 
+                    if os.path.isdir(selected):
+                        os.rename(selected,newName)                        
+                    else:
+                        os.rename(selected,newName)
+                except PermissionError:
+                    print('You can not change the name of this object!')
+                    sg.popup_ok('You can not change the name of this object!', 'Aborting action...', keep_on_top=True)
+
+                    os.chdir(backup_path)
+            window_refresh(window)
   
         if event == 'Flatten':
 

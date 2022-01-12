@@ -68,7 +68,7 @@ def window_open(window, path, filtr_active, filtr):
                        enable_events=True,
                        expand_x=True),
                ],
-              [sg.Button('Exit', s=(10)), sg.Button('Open',  s=(10)), sg.Button('Flatten',  s=(10)), sg.Button('Enter-key', bind_return_key = True, visible = False)]]
+              [sg.Button('Exit', s=(10)), sg.Button('Open',  s=(10)), sg.Button('Flatten',  s=(10)), sg.Button('Rename',  s=(10)), sg.Button('Enter-key', bind_return_key = True, visible = False)]]
 
     window[0] = sg.Window('File Browser', layout, finalize = True)
     window[0]['-TREE-'].bind('<Double-Button-1>', '_double_clicked')
