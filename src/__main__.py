@@ -150,10 +150,11 @@ def main():
                 try:
                     app = QApplication([])
                     newName, ok = QInputDialog.getText(None, "Choose new name", "Enter new name:")
-                    if os.path.isdir(selected):
-                        os.rename(selected, newName)
-                    else:
-                        os.rename(selected, newName)
+                    if ok == True:
+                        if os.path.isdir(selected):
+                            os.rename(selected, newName)
+                        else:
+                            os.rename(selected, newName)
                 except PermissionError:
                     print("You can not change the name of this object!")
                     sg.popup_ok(
