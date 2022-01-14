@@ -34,13 +34,13 @@ def find_files_in_folder(dirname, find):
     return treedata
 
 
-def window_open(window, path, filtr_active, filtr):
+def window_open(window, path, search_active, search):
     # global window   # should try to change this, heard this isn't good
 
-    if filtr_active == False:
+    if search_active == False:
         treedata = add_files_in_folder(path)
     else:
-        treedata = find_files_in_folder(path, filtr)
+        treedata = find_files_in_folder(path, search)
 
     layout = [
         [
@@ -58,13 +58,13 @@ def window_open(window, path, filtr_active, filtr):
         ],
         [
             sg.Input(
-                filtr,
-                key="-filterBar-",
+                search,
+                key="-searchBar-",
                 expand_x=True,
-                tooltip="You can input phrase for which the program will filter in the directory",
+                tooltip="You can input phrase for which the program will search in the directory",
                 size=(30),
             ),
-            sg.Button("Filter", s=(10)),
+            sg.Button("Search", s=(10)),
         ],
         [
             sg.Tree(
@@ -96,10 +96,10 @@ def window_open(window, path, filtr_active, filtr):
 
 
 def window_refresh(
-    window, path="_empty_", filtr_active=False, filtr=""
+    window, path="_empty_", search_active=False, search=""
 ):  # path = os.getcwd() doesn't work propertly it returns the initial working dir from when the app started
     if path == "_empty_" or not os.path.exists(path):
         path = os.getcwd()
 
     window[0].close()
-    window_open(window, path, filtr_active, filtr)
+    window_open(window, path, search_active, search)
